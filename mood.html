@@ -1,0 +1,554 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mood Player</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
+    <style>
+        /* 1. 전체 테마: 뉴트럴 & 클린 (Neutral & Clean) */
+        body {
+            background-color: #f5f7fa; /* 아주 연한 회색 (눈이 편안함) */
+            color: #333333; /* 짙은 회색 텍스트 */
+            font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, Roboto, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+        }
+        
+        h1 { 
+            margin-bottom: 25px; 
+            color: #2c3e50; 
+            font-weight: 700;
+            letter-spacing: -0.5px;
+        }
+
+        /* 패널 스타일: 카드 형태 */
+        .panel {
+            background: #ffffff;
+            padding: 25px 30px;
+            border-radius: 16px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.05); /* 부드러운 그림자 */
+            margin-bottom: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            align-items: center;
+            border: 1px solid #eaeaea;
+        }
+
+        .selectors {
+            display: flex;
+            gap: 12px;
+        }
+        
+        /* 드롭다운 스타일: 모던하게 */
+        select {
+            background-color: #f8f9fa;
+            color: #444;
+            border: 1px solid #ddd;
+            padding: 10px 14px;
+            border-radius: 8px;
+            font-family: inherit;
+            font-size: 0.9em;
+            cursor: pointer;
+            outline: none;
+            transition: border 0.2s;
+        }
+        select:focus { border-color: #888; }
+
+        label {
+            display: block;
+            font-size: 0.75em;
+            color: #888;
+            margin-bottom: 6px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+        .selector-group { text-align: center; }
+
+        /* 캔버스: 종이 질감 느낌 */
+        #canvas-container {
+            width: 800px;
+            height: 250px;
+            background-color: #ffffff;
+            border: 1px solid #e0e0e0;
+            border-radius: 12px;
+            position: relative;
+            overflow: hidden;
+            box-shadow: inset 0 0 20px rgba(0,0,0,0.02);
+            margin-bottom: 15px;
+        }
+        canvas { display: block; }
+
+        /* 무드 디스플레이: 깔끔한 태그 스타일 */
+        #mood-display {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            align-items: center;
+            height: 60px; /* 고정 높이 확보 */
+            margin-bottom: 15px;
+            font-size: 0.95em;
+            color: #999;
+            flex-wrap: wrap;
+        }
+        
+        .mood-word {
+            transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+            padding: 8px 16px;
+            border-radius: 50px; /* 캡슐 모양 */
+            background-color: #fff;
+            border: 1px solid #eee;
+            color: #bbb;
+        }
+        
+        /* 활성화 상태: 배경색이 채워짐 (플랫 디자인) */
+        .mood-word.active {
+            color: #fff !important; /* 글자는 무조건 흰색 */
+            font-weight: 700;
+            transform: scale(1.15);
+            border-color: transparent;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+        
+        .arrow { color: #ddd; font-size: 0.8em; }
+
+        /* 컨트롤 영역 */
+        .controls { 
+            display: flex; 
+            gap: 12px; 
+            margin-top: 10px; 
+            background: #fff;
+            padding: 10px 20px;
+            border-radius: 50px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+            border: 1px solid #f0f0f0;
+        }
+        
+        button {
+            border: none;
+            padding: 12px 24px;
+            font-size: 15px;
+            font-weight: 600;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+        
+        /* 1. New Song 버튼 */
+        #new-btn { 
+            background-color: #333; 
+            color: white; 
+        }
+        #new-btn:hover { background-color: #000; transform: translateY(-2px); }
+
+        /* 2. Resume/Pause 버튼 */
+        #resume-btn {
+            background-color: #f0f0f0;
+            color: #333;
+            min-width: 110px;
+        }
+        #resume-btn:hover { background-color: #e0e0e0; }
+        #resume-btn.active { background-color: #e0e0e0; color: #000; }
+
+        /* 3. Replay 버튼 */
+        #replay-btn {
+            background-color: #fff;
+            color: #555;
+            border: 1px solid #ddd;
+        }
+        #replay-btn:hover { border-color: #bbb; color: #333; }
+
+        /* 4. Remix 버튼 */
+        #remix-btn {
+            background: transparent;
+            color: #888;
+            font-size: 14px;
+            padding: 12px 15px;
+        }
+        #remix-btn:hover { color: #333; background: #f9f9f9; }
+
+        #status { font-size: 0.85em; color: #999; margin-top: 20px; min-height: 20px; }
+    </style>
+</head>
+<body>
+
+    <h1>Mood Player</h1>
+
+    <div class="panel">
+        <div class="selectors">
+            <div class="selector-group">
+                <label>Theme</label>
+                <select id="sel-hook"></select>
+            </div>
+            <div class="selector-group">
+                <label>Intro</label>
+                <select id="sel-apart"></select>
+            </div>
+            <div class="selector-group">
+                <label>Build-up</label>
+                <select id="sel-bpart"></select>
+            </div>
+            <div class="selector-group">
+                <label>Climax</label>
+                <select id="sel-keychange"></select>
+            </div>
+            <div class="selector-group">
+                <label>Outro</label>
+                <select id="sel-ending"></select>
+            </div>
+        </div>
+    </div>
+    
+    <div id="canvas-container">
+        <canvas id="visualizer" width="800" height="250"></canvas>
+    </div>
+
+    <div id="mood-display"></div>
+    
+    <div class="controls">
+        <button id="remix-btn" title="Random Settings">🎲 Mix</button>
+        <button id="replay-btn">⏮ Replay</button>
+        <button id="resume-btn">⏯ Resume</button>
+        <button id="new-btn">✨ New Song</button>
+    </div>
+    <div id="status">Ready.</div>
+
+    <script>
+        // ==========================================
+        // 1. 화성 데이터
+        // ==========================================
+        const A=[57,61,64,69]; const A7=[57,61,64,67]; const AMajor7=[57,61,64,68]; const Asus4=[57,62,64,69];
+        const Am=[57,64,69,72]; const Am7=[57,64,67,72]; const Am7onG=[55,64,69,72]; const Am7onD=[50,64,67,72];
+        const Bb=[58,62,65,70]; const Bb7=[58,62,65,68]; const Bbm7=[58,61,65,68]; const BbMajor7=[58,62,65,69];
+        const B7=[59,63,66,69]; const Bm7=[59,62,66,69]; const Bm7b5=[59,62,65,69];
+        const C=[48,64,67,72]; const C7=[48,64,67,70]; const Cadd9=[48,62,64,65];
+        const CMajor7=[48,64,67,71]; const CMajor7onB=[59,64,67,72];
+        const Cm=[48,60,63,67]; const Cm7=[48,63,67,70]; const Csus4=[48,64,67,72];
+        const ConG=[55,60,64,67]; const C7onBb=[58,64,67,72];
+        const D=[50,62,66,69]; const D7=[50,60,66,69]; const DMajor7=[50,61,66,69];
+        const Dm=[50,62,65,69]; const Dm7=[50,60,65,69]; const Dm7b5=[50,65,68,72];
+        const DmMajor7=[50,61,65,69]; const Dm7onG=[55,65,69,72];
+        const E=[52,64,68,71]; const E7=[52,62,68,71]; const E7onGsharp=[56,62,64,71]; const E7sus4=[52,62,69,71];
+        const Em=[52,64,67,71]; const Em7=[52,62,67,71]; const Em7b5=[52,62,67,70];
+        const EmMajor7=[52,63,67,71]; const Emsus4=[52,59,64,69];
+        const Eb=[51,63,67,70]; const Eb7=[51,61,67,70]; const Ebm7=[51,61,66,70]; const EbMajor7=[51,62,67,70];
+        const F=[53,60,65,69]; const F7=[53,63,69,72]; const FMajor7=[53,64,69,72]; const FMajor7onG=[55,64,65,69,72];
+        const Fm=[53,60,65,70]; const Fm7=[53,63,68,72]; const Fm7onEb=[51,65,69,72];
+        const Fsharpm7=[54,61,64,69]; const Fsharpm7b5=[54,64,69,72];
+        const G=[55,62,67,71]; const G7=[55,62,65,71]; const G7sus4=[55,62,65,69];
+        const Gm=[55,59,62,67]; const Gm7=[55,62,65,70]; const Gm7b5=[55,61,65,70];
+        const GMajor7=[55,62,66,71]; const GonB=[59,62,67,71];
+
+        const hookPatterns = [
+            [F,G,C,Am7,F,G,C,G7], 
+            [Em,Em,F,F,Em,Em,F,G7], 
+            [Em7,Am7,Dm7,G7,Em7,Dm7,Dm7,C,G7],
+            [Dm7,G7,CMajor7,FMajor7,Dm7,G7,CMajor7,G7], 
+            [E7,E7,Am,Am,E7,E7,Am,Am7onG,F,F,Em,Em,F,F,G7sus4,G7]
+        ];
+        const ApartPatterns = [
+            [C,C,F,G,Em,C,F,G], [C,C,Dm7,G7,Em,C,Dm7,G7], [C,C,Dm7,G7,C,Am7,Dm7,G7],
+            [C,Am7,Dm7,G7,Em,Am7,Dm7,G7], [C,G7,C,G7,Em,Am7,Dm7,G7], [C,Am7,Dm7,G7,C,A7,Dm7,G7],
+            [C,F,Em,F,C,F,G7sus4,G7]
+        ];
+        const BpartPatterns = [
+            [C,C,C,C,F,F,G,G,Em,Em,C,C,F,G,C,C], [C,C,C,C,Dm7,Dm7,G7,G7,Em,Em,C,C,Dm7,G7,C,C],
+            [C,C,Am7,Am7,Dm7,Dm7,G7,G7,Em7,Em7,Am7,Am7,Dm7,G7,C,C], [C,C,G7,G7,C,C,G7,G7,Em,Em,Am7,Am7,Dm7,G7,C,C],
+            [C,C,F,F,Em,Em,F,F,C,C,F,F,G7sus4,G7,C,C]
+        ];
+        const KeyChangePatterns = [
+            [Gm7,C7,F,Dm7,Gm7,C7,F,G7], [Cm7,F7,BbMajor7,BbMajor7,Am7,D7,Dm7,G7],
+            [C,C,C7,C7,F,F,F,F,Fm7,Fm7,Bb7,Bb7,EbMajor7,EbMajor7,Dm7,G7]
+        ];
+        const EndingPatterns = [
+            [C,C,GonB,GonB,Am,Am,Am7onG,Am7onG, Fsharpm7b5,Fsharpm7b5,F,F,Em7,Dm7,C,C],
+            [G7sus4,G7sus4,G7,G7,G7sus4,G7sus4,G7,G7,G7sus4,G7sus4,G7,G7,G7sus4,G7,C,C]
+        ];
+
+        // --- Mood Colors (중립 디자인에 맞춰 약간 더 부드러운 톤으로 조정 가능) ---
+        const moodColorMap = {
+            '목가적인': '#8FBC8F', '조금 어른스러운': '#800020', '안정된': '#4682B4',
+            '도시적인': '#9370DB', '멜로 드라마 느낌의': '#C71585',
+            '밝은': '#FFC107', '즐거운': '#FF9800', '상냥한': '#FFA07A',
+            '강력한': '#E91E63', '봄 분위기의': '#8BC34A', '차분한': '#607D8B', '희망찬': '#03A9F4',
+            '기대감을 주는': '#4DB6AC',
+            '분위기를 띄우는': '#FF4081', '행복감이 넘치는': '#E040FB', '자연스럽게 조를 바꾸는': '#009688',
+            '연결감이 있는': '#FFB300', '서서히 끓어오르는': '#D32F2F', 'default': '#555'
+        };
+
+        const hookMOOD = ['목가적인', '조금 어른스러운', '안정된', '도시적인', '멜로 드라마 느낌의'];
+        const ApartMOOD = ['밝은', '즐거운', '상냥한', '강력한', '봄 분위기의', '차분한', '희망찬'];
+        const BpartMOOD = ['밝은', '즐거운', '강력한', '봄 분위기의', '기대감을 주는'];
+        const KeyChangeMOOD = ['분위기를 띄우는', '행복감이 넘치는', '자연스럽게 조를 바꾸는'];
+        const EndingMOOD = ['연결감이 있는', '서서히 끓어오르는'];
+
+        // ==========================================
+        // 2. Init
+        // ==========================================
+        function fillSelect(id, patterns, moods) {
+            const select = document.getElementById(id);
+            select.innerHTML = "";
+            patterns.forEach((pattern, index) => {
+                const option = document.createElement('option');
+                option.value = index; 
+                option.text = moods[index] || `Theme ${index+1}`; 
+                select.appendChild(option);
+            });
+            select.selectedIndex = Math.floor(Math.random() * patterns.length);
+        }
+        fillSelect('sel-hook', hookPatterns, hookMOOD);
+        fillSelect('sel-apart', ApartPatterns, ApartMOOD);
+        fillSelect('sel-bpart', BpartPatterns, BpartMOOD);
+        fillSelect('sel-keychange', KeyChangePatterns, KeyChangeMOOD);
+        fillSelect('sel-ending', EndingPatterns, EndingMOOD);
+
+        const synth = new Tone.PolySynth(Tone.Synth, {
+            oscillator: { type: "triangle" },
+            envelope: { attack: 0.05, decay: 0.2, sustain: 0.4, release: 1.2 }
+        }).toDestination();
+        const filter = new Tone.Filter(800, "lowpass").toDestination();
+        const reverb = new Tone.Reverb(2.5).toDestination();
+        synth.connect(filter);
+        synth.connect(reverb);
+
+        const canvas = document.getElementById('visualizer');
+        const ctx = canvas.getContext('2d');
+        let currentSequence = [];
+        let animationId;
+        let isSongReady = false; // 곡 생성 여부
+
+        const statusDiv = document.getElementById('status');
+        const btnNew = document.getElementById('new-btn');
+        const btnResume = document.getElementById('resume-btn');
+        const btnReplay = document.getElementById('replay-btn');
+
+        // ==========================================
+        // 3. Control Logic (Improved)
+        // ==========================================
+
+        // [New Song]
+        btnNew.addEventListener('click', async () => {
+            await Tone.start();
+            generateAndPlay();
+            updateButtons('playing');
+        });
+
+        // [Resume / Pause]
+        btnResume.addEventListener('click', async () => {
+            await Tone.start();
+            if (!isSongReady) { // 곡이 없으면 생성
+                generateAndPlay();
+                updateButtons('playing');
+                return;
+            }
+
+            if (Tone.Transport.state === 'started') {
+                Tone.Transport.pause();
+                updateButtons('paused');
+            } else {
+                Tone.Transport.start();
+                updateButtons('playing');
+            }
+        });
+
+        // [Replay]
+        btnReplay.addEventListener('click', async () => {
+            await Tone.start();
+            if (!isSongReady) {
+                generateAndPlay();
+            } else {
+                // 현재 곡의 스케줄은 유지한 채 타임라인만 0으로 되감기
+                Tone.Transport.stop(); 
+                clearHighlights(); // UI 초기화
+                Tone.Transport.start(); // 처음부터 시작
+            }
+            updateButtons('playing');
+        });
+
+        function updateButtons(state) {
+            if (state === 'playing') {
+                btnResume.innerText = "⏸ Pause";
+                btnResume.classList.add('active');
+                statusDiv.innerText = "Playing...";
+            } else if (state === 'paused') {
+                btnResume.innerText = "▶ Resume";
+                btnResume.classList.remove('active');
+                statusDiv.innerText = "Paused.";
+            } else { // stopped
+                btnResume.innerText = "▶ Resume";
+                btnResume.classList.remove('active');
+                statusDiv.innerText = "Ready.";
+            }
+        }
+
+        // ==========================================
+        // 4. Music Logic
+        // ==========================================
+        function activateMood(id, color) {
+            const el = document.getElementById(id);
+            if(el) {
+                el.classList.add('active');
+                // 활성화되면 배경색을 칠하고 글자를 흰색으로
+                el.style.backgroundColor = color; 
+                el.style.borderColor = color;
+            }
+        }
+
+        function clearHighlights() {
+            document.querySelectorAll('.mood-word').forEach(el => {
+                el.classList.remove('active');
+                el.style.backgroundColor = '#fff';
+                el.style.borderColor = '#eee';
+                el.style.color = '#bbb';
+            });
+        }
+
+        function createMoodDisplay(structure) {
+            const container = document.getElementById('mood-display');
+            container.innerHTML = ""; 
+            structure.forEach((section, idx) => {
+                if(!section.uiId) return;
+                const span = document.createElement('span');
+                const uniqueId = `mood-${idx}`;
+                span.id = uniqueId; 
+                span.className = 'mood-word';
+                span.innerText = section.label;
+                container.appendChild(span);
+                section.domId = uniqueId;
+                if (idx < structure.length - 1) { 
+                    const arrow = document.createElement('span');
+                    arrow.className = 'arrow';
+                    arrow.innerText = '→';
+                    container.appendChild(arrow);
+                }
+            });
+        }
+
+        async function generateAndPlay() {
+            Tone.Transport.stop();
+            Tone.Transport.cancel();
+            clearHighlights();
+            currentSequence = [];
+            
+            const hIdx = document.getElementById('sel-hook').value;
+            const aIdx = document.getElementById('sel-apart').value;
+            const bIdx = document.getElementById('sel-bpart').value;
+            const kIdx = document.getElementById('sel-keychange').value;
+            const eIdx = document.getElementById('sel-ending').value;
+
+            const DataHook = { chords: hookPatterns[hIdx], label: hookMOOD[hIdx] };
+            const DataA = { chords: ApartPatterns[aIdx], label: ApartMOOD[aIdx] };
+            const DataB = { chords: BpartPatterns[bIdx], label: BpartMOOD[bIdx] };
+            const DataKey = { chords: KeyChangePatterns[kIdx], label: KeyChangeMOOD[kIdx] };
+            const DataEnd = { chords: EndingPatterns[eIdx], label: EndingMOOD[eIdx] };
+
+            const finalStructure = [
+                { ...DataHook, uiId: true }, 
+                { ...DataA,    uiId: true }, 
+                { ...DataB,    uiId: true }, 
+                { ...DataKey,  uiId: true }, 
+                { ...DataB,    uiId: true }, 
+                { ...DataHook, uiId: true }, 
+                { ...DataEnd,  uiId: true }  
+            ];
+
+            createMoodDisplay(finalStructure);
+
+            let startTimeOffset = 0;
+            const measureTime = Tone.Time("2n").toSeconds();
+
+            finalStructure.forEach((section) => {
+                const sectionColor = moodColorMap[section.label] || moodColorMap['default'];
+
+                if (section.domId) {
+                    Tone.Transport.schedule((time) => {
+                        Tone.Draw.schedule(() => {
+                            clearHighlights();
+                            activateMood(section.domId, sectionColor);
+                        }, time);
+                    }, startTimeOffset);
+                }
+
+                section.chords.forEach((chord, idx) => {
+                    const time = startTimeOffset + (idx * measureTime);
+                    Tone.Transport.schedule((playTime) => {
+                        const freqChord = chord.map(m => Tone.Frequency(m, "midi").toFrequency());
+                        synth.triggerAttackRelease(freqChord, "2n", playTime);
+                    }, time);
+
+                    chord.forEach(midi => {
+                        const y = canvas.height - ((midi - 30) / 60 * canvas.height);
+                        currentSequence.push({
+                            spawnTime: time,
+                            x: 800, 
+                            y: y,
+                            width: 100,
+                            color: sectionColor 
+                        });
+                    });
+                });
+                startTimeOffset += section.chords.length * measureTime;
+            });
+
+            Tone.Transport.schedule((time) => {
+                Tone.Draw.schedule(() => {
+                    updateButtons('stopped');
+                    clearHighlights();
+                    statusDiv.innerText = "Song finished.";
+                }, time);
+            }, startTimeOffset + 1);
+
+            Tone.Transport.start();
+            isSongReady = true;
+            animateVisuals();
+        }
+
+        document.getElementById('remix-btn').addEventListener('click', () => {
+            const selects = document.querySelectorAll('select');
+            selects.forEach(sel => {
+                sel.selectedIndex = Math.floor(Math.random() * sel.options.length);
+            });
+            statusDiv.innerText = "Settings randomized. Press New Song.";
+        });
+
+        // ==========================================
+        // 5. Visualizer
+        // ==========================================
+        function animateVisuals() {
+            animationId = requestAnimationFrame(animateVisuals);
+            
+            // 캔버스 배경을 흰색으로 지움
+            ctx.fillStyle = "#ffffff";
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            const now = Tone.Transport.seconds; 
+
+            currentSequence.forEach(note => {
+                if (now >= note.spawnTime) {
+                    const timeDiff = now - note.spawnTime;
+                    const xPos = canvas.width - (timeDiff * 100); 
+
+                    if (xPos + note.width > 0) {
+                        ctx.fillStyle = note.color;
+                        // 그림자는 제거하여 깔끔하게 (Flat)
+                        ctx.fillRect(xPos, note.y, note.width, 10);
+                    }
+                }
+            });
+            
+            if (Tone.Transport.state === 'stopped' && !isSongReady) {
+                 cancelAnimationFrame(animationId);
+            }
+        }
+    </script>
+</body>
+</html>
