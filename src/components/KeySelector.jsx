@@ -17,26 +17,26 @@ export const KeySelector = ({ selectedKey, onKeyChange, allowRandom = false }) =
   };
 
   return (
-    <div className="flex items-center w-fit gap-1 bg-slate-900/80 backdrop-blur-md rounded-xl border border-white/10 p-1 shadow-lg">
+    <div className="flex items-center w-fit gap-0.5 bg-slate-900/80 backdrop-blur-md rounded-lg border border-white/10 p-0.5 shadow-lg">
       <button 
         onClick={handlePrev}
-        className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-white/10 text-slate-400 hover:text-white transition-colors"
+        className="w-6 h-6 flex items-center justify-center rounded-md hover:bg-white/10 text-slate-400 hover:text-white transition-colors"
       >
-        <ChevronLeft className="w-5 h-5" />
+        <ChevronLeft className="w-4 h-4" />
       </button>
       
-      <div className="flex flex-col items-center justify-center min-w-[44px]">
-        <div className="text-[9px] font-bold text-slate-500 uppercase tracking-wider mb-[-2px]">Key</div>
-        <div className="flex items-center justify-center text-lg font-black text-emerald-400 leading-none h-6">
-          {selectedKey === 'Random' ? <Dices className="w-5 h-5 text-emerald-400" /> : selectedKey}
+      <div className="flex flex-col items-center justify-center min-w-[36px]">
+        <div className="text-[8px] font-bold text-slate-500 uppercase tracking-wider mb-[-2px]">Key</div>
+        <div className="flex items-center justify-center text-sm font-black text-emerald-400 leading-none h-4">
+          {selectedKey === 'Random' ? <Dices className="w-3.5 h-3.5 text-emerald-400" /> : selectedKey}
         </div>
       </div>
       
       <button 
         onClick={handleNext}
-        className="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-white/10 text-slate-400 hover:text-white transition-colors"
+        className="w-6 h-6 flex items-center justify-center rounded-md hover:bg-white/10 text-slate-400 hover:text-white transition-colors"
       >
-        <ChevronRight className="w-5 h-5" />
+        <ChevronRight className="w-4 h-4" />
       </button>
     </div>
   );

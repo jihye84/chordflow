@@ -58,96 +58,95 @@ export const ChordTrack = ({ progression, selectedKey, onKeyChange }) => {
   };
 
   return (
-    <div className="w-full max-w-5xl mx-auto my-8">
-      <div className="flex flex-col md:flex-row md:items-end justify-between mb-6 gap-6 border-b border-slate-800 pb-5">
-        <div className="flex-1">
-          <div className="flex items-center gap-2 mb-2">
-            <Music className="w-5 h-5 text-emerald-500" />
-            <span className="text-emerald-400 font-bold tracking-wider text-xs uppercase">{progression.category}</span>
+    <div className="w-full max-w-6xl mx-auto my-4">
+      {/* 1-Row Header */}
+      <div className="flex flex-col lg:flex-row items-center justify-between mb-4 gap-4 bg-slate-900/60 p-4 rounded-3xl border border-slate-800 shadow-lg">
+        
+        {/* Title & Story */}
+        <div className="flex-1 min-w-0 w-full">
+          <div className="flex items-center gap-2 mb-1">
+            <Music className="w-4 h-4 text-emerald-500" />
+            <span className="text-emerald-400 font-bold tracking-wider text-[10px] uppercase">{progression.category}</span>
           </div>
-          <h2 className="text-2xl sm:text-3xl font-black text-slate-100 mb-2">{progression.title}</h2>
-          <p className="text-sm sm:text-base text-slate-400 font-medium leading-relaxed max-w-3xl">
+          <h2 className="text-xl sm:text-2xl font-black text-slate-100 truncate">{progression.title}</h2>
+          <p className="text-xs sm:text-sm text-slate-400 font-medium truncate">
             {progression.story || progression.description}
           </p>
         </div>
         
-        <div className="flex flex-col sm:flex-row items-center gap-4 shrink-0">
-          {/* Audio Controls (BPM & Style) */}
-          <div className="flex items-center gap-4 bg-slate-900/50 p-2 rounded-2xl border border-slate-700/50 backdrop-blur-sm shadow-inner">
-            
-            {/* BPM Slider */}
-            <div className="flex flex-col px-2 w-[120px]">
-              <div className="flex justify-between items-center mb-1">
-                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">BPM</span>
-                <span className="text-xs font-mono font-bold text-emerald-400">{bpm}</span>
-              </div>
-              <input 
-                type="range" 
-                min="60" max="180" step="5"
-                value={bpm}
-                onChange={(e) => setBpm(parseInt(e.target.value))}
-                className="w-full accent-emerald-500 h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer"
-              />
-            </div>
-            
-            <div className="w-px h-8 bg-slate-700/50"></div>
-
-            {/* Play Style Toggle */}
-            <div className="flex bg-slate-800/80 rounded-xl p-1">
-              <button
-                onClick={() => setPlayStyle('block')}
-                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-colors ${playStyle === 'block' ? 'bg-slate-700 text-white shadow-sm' : 'text-slate-400 hover:text-slate-200'}`}
-              >
-                Block
-              </button>
-              <button
-                onClick={() => setPlayStyle('arpeggio')}
-                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-colors ${playStyle === 'arpeggio' ? 'bg-slate-700 text-white shadow-sm' : 'text-slate-400 hover:text-slate-200'}`}
-              >
-                Arp
-              </button>
-            </div>
-          </div>
-
-          <button
-            onClick={handlePlayAll}
-            className={`flex items-center justify-center gap-2 px-6 py-3.5 rounded-full font-bold text-white shadow-lg transition-all shrink-0 min-w-[150px]
-              ${isPlaying 
-                ? 'bg-red-500 hover:bg-red-600 shadow-[0_0_20px_rgba(239,68,68,0.4)]' 
-                : 'bg-emerald-500 hover:bg-emerald-600 shadow-[0_0_20px_rgba(16,185,129,0.3)]'}`}
-          >
-            {isPlaying ? <Square className="w-5 h-5" /> : <Play className="w-5 h-5 fill-current" />}
-            {isPlaying ? '정지' : '재생'}
-          </button>
+        {/* Mini-map */}
+        <div className="hidden lg:block shrink-0 w-[140px]">
+          <ProgressionTree 
+            progression={progression} 
+            selectedKey={selectedKey} 
+            activeIndex={activeIndex} 
+            playingSingle={playingSingle} 
+          />
         </div>
-      </div>
 
-      <ProgressionTree 
-        progression={progression} 
-        selectedKey={selectedKey} 
-        activeIndex={activeIndex} 
-        playingSingle={playingSingle} 
-      />
-
-      <div className="flex flex-col lg:flex-row gap-8 bg-slate-900/60 backdrop-blur-md p-6 rounded-3xl border border-white/10 shadow-lg">
-        
-        {/* Left Side: Key Selector */}
-        <div className="shrink-0 flex justify-center lg:justify-start lg:sticky lg:top-24 h-fit">
+        {/* Key Selector */}
+        <div className="shrink-0 flex items-center">
           <KeySelector selectedKey={selectedKey} onKeyChange={onKeyChange} />
         </div>
-        
-        {/* Divider */}
-        <div className="hidden lg:block w-px bg-slate-800 min-h-[220px]"></div>
-        
-        {/* Chords Timeline (Wrappable) */}
-        <div className="flex-1 flex flex-wrap gap-4 justify-center lg:justify-start">
-          {progression.chords.map((chord, idx) => (
-            <div key={idx} className="w-[120px] sm:w-[130px] flex flex-col items-center group">
-              <motion.button
-                whileHover={{ scale: isPlaying ? 1 : 1.05, y: isPlaying ? 0 : -4 }}
-                whileTap={{ scale: isPlaying ? 1 : 0.95 }}
-                onClick={() => handlePlayChord(chord, idx)}
-                className={`w-full relative rounded-2xl flex flex-col items-center justify-start pt-4 pb-3 px-2 transition-all duration-300 border-2 min-h-[160px] overflow-hidden
+
+        {/* Audio Controls (BPM & Style) */}
+        <div className="shrink-0 flex items-center gap-2 bg-slate-800/80 p-1.5 rounded-2xl border border-slate-700/50">
+          {/* BPM Slider */}
+          <div className="flex flex-col px-2 w-[80px] sm:w-[100px]">
+            <div className="flex justify-between items-center mb-1">
+              <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">BPM</span>
+              <span className="text-[10px] font-mono font-bold text-emerald-400">{bpm}</span>
+            </div>
+            <input 
+              type="range" 
+              min="60" max="180" step="5"
+              value={bpm}
+              onChange={(e) => setBpm(parseInt(e.target.value))}
+              className="w-full accent-emerald-500 h-1 bg-slate-700 rounded-lg appearance-none cursor-pointer"
+            />
+          </div>
+          
+          <div className="w-px h-6 bg-slate-700/50"></div>
+
+          {/* Play Style Toggle */}
+          <div className="flex bg-slate-900/80 rounded-xl p-0.5">
+            <button
+              onClick={() => setPlayStyle('block')}
+              className={`px-2 py-1 rounded-lg text-[10px] font-bold transition-colors ${playStyle === 'block' ? 'bg-slate-700 text-white shadow-sm' : 'text-slate-400 hover:text-slate-200'}`}
+            >
+              Blk
+            </button>
+            <button
+              onClick={() => setPlayStyle('arpeggio')}
+              className={`px-2 py-1 rounded-lg text-[10px] font-bold transition-colors ${playStyle === 'arpeggio' ? 'bg-slate-700 text-white shadow-sm' : 'text-slate-400 hover:text-slate-200'}`}
+            >
+              Arp
+            </button>
+          </div>
+        </div>
+
+        {/* Play Button */}
+        <button
+          onClick={handlePlayAll}
+          className={`flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-2xl font-bold text-white shadow-lg transition-all shrink-0 min-w-[90px] text-sm
+            ${isPlaying 
+              ? 'bg-red-500 hover:bg-red-600 shadow-[0_0_15px_rgba(239,68,68,0.4)]' 
+              : 'bg-emerald-500 hover:bg-emerald-600 shadow-[0_0_15px_rgba(16,185,129,0.3)]'}`}
+        >
+          {isPlaying ? <Square className="w-4 h-4" /> : <Play className="w-4 h-4 fill-current" />}
+          {isPlaying ? '정지' : '재생'}
+        </button>
+      </div>
+
+      {/* 1-Row Timeline */}
+      <div className="flex w-full gap-2 sm:gap-3 bg-slate-900/60 backdrop-blur-md p-4 sm:p-5 rounded-3xl border border-white/10 shadow-lg overflow-hidden">
+        {progression.chords.map((chord, idx) => (
+          <div key={idx} className="flex-1 min-w-0 flex flex-col items-center group">
+            <motion.button
+              whileHover={{ scale: isPlaying ? 1 : 1.05, y: isPlaying ? 0 : -4 }}
+              whileTap={{ scale: isPlaying ? 1 : 0.95 }}
+              onClick={() => handlePlayChord(chord, idx)}
+              className={`w-full relative rounded-2xl flex flex-col items-center justify-start pt-3 pb-2 px-1 transition-all duration-300 border-2 h-full min-h-[140px] overflow-hidden
                   ${activeIndex === idx 
                     ? 'bg-slate-900 border-emerald-500 shadow-[0_0_30px_rgba(16,185,129,0.3)] ring-4 ring-emerald-500/20 z-10 scale-[1.02]' 
                     : playingSingle === idx
@@ -206,7 +205,6 @@ export const ChordTrack = ({ progression, selectedKey, onKeyChange }) => {
               </motion.button>
             </div>
           ))}
-        </div>
       </div>
     </div>
   );

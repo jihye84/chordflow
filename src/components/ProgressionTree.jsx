@@ -2,7 +2,6 @@ import React, { useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { TENSION_ANGLES } from '../data/compassData';
 import { getChordName } from '../utils/theory';
-import { Volume2 } from 'lucide-react';
 
 export const ProgressionTree = ({ progression, selectedKey, activeIndex, playingSingle }) => {
   const { trunkNodes, boundingBox } = useMemo(() => {
@@ -10,7 +9,6 @@ export const ProgressionTree = ({ progression, selectedKey, activeIndex, playing
     let curX = 0;
     let curY = 0;
     
-    // Determine angle based on numeral directly
     const getAngle = (num) => TENSION_ANGLES[num] !== undefined ? TENSION_ANGLES[num] : 30;
 
     let toggleRef = 1;
@@ -27,7 +25,7 @@ export const ProgressionTree = ({ progression, selectedKey, activeIndex, playing
         }
         
         const angleRad = finalAngle * (Math.PI / 180);
-        const radius = 220 + (Math.abs(finalAngle) * 0.3); // slightly tighter radius
+        const radius = 80 + (Math.abs(finalAngle) * 0.1); 
         curX += Math.sin(angleRad) * radius;
         curY += Math.cos(angleRad) * radius;
       }
@@ -37,8 +35,6 @@ export const ProgressionTree = ({ progression, selectedKey, activeIndex, playing
         numeral, 
         x: curX, 
         y: curY,
-        role: chord.role,
-        roleColor: chord.roleColor 
       });
     }
 
@@ -60,11 +56,11 @@ export const ProgressionTree = ({ progression, selectedKey, activeIndex, playing
     if (trunkNodes.length === 0) return { x: 0, y: 0, scale: 1 };
     
     const { minX, maxX, minY, maxY } = boundingBox;
-    const width = maxX - minX + 250; 
-    const height = maxY - minY + 250; 
+    const width = maxX - minX + 100; 
+    const height = maxY - minY + 100; 
     
-    const scaleX = 800 / Math.max(width, 1);
-    const scaleY = 350 / Math.max(height, 1);
+    const scaleX = 250 / Math.max(width, 1);
+    const scaleY = 80 / Math.max(height, 1);
     const fullScale = Math.min(scaleX, scaleY, 1); 
 
     const centerX = (minX + maxX) / 2;
@@ -78,8 +74,7 @@ export const ProgressionTree = ({ progression, selectedKey, activeIndex, playing
   }, [boundingBox, trunkNodes.length]);
 
   return (
-    <div className="relative w-full h-[400px] bg-slate-900/60 backdrop-blur-2xl rounded-3xl border border-white/10 overflow-hidden shadow-2xl flex justify-center items-center mb-6">
-      
+    <div className="relative w-full max-w-[300px] h-[100px] bg-slate-900/40 rounded-2xl border border-white/5 overflow-hidden flex justify-center items-center">
       <motion.div 
         animate={{ x: cameraProps.x, y: cameraProps.y, scale: cameraProps.scale }}
         transition={{ type: "spring", damping: 25, stiffness: 120 }}
@@ -97,7 +92,7 @@ export const ProgressionTree = ({ progression, selectedKey, activeIndex, playing
               const dist = Math.max(Math.sqrt(vx*vx + vy*vy), 1);
               const perpX = -vy / dist;
               const perpY = vx / dist;
-              const bulge = (i % 2 === 0 ? 40 : -40);
+              const bulge = (i % 2 === 0 ? 15 : -15);
               const cpX = prev.x + vx * 0.5 + perpX * bulge;
               const cpY = -prev.y + vy * 0.5 + perpY * bulge;
 
@@ -107,7 +102,7 @@ export const ProgressionTree = ({ progression, selectedKey, activeIndex, playing
                   d={`M ${prev.x},${-prev.y} Q ${cpX},${cpY} ${n.x},${-n.y}`}
                   fill="none"
                   stroke={isActivePath ? "#10b981" : "#475569"}
-                  strokeWidth={isActivePath ? 16 : 10}
+                  strokeWidth={isActivePath ? 6 : 3}
                   strokeLinecap="round"
                   className="transition-colors duration-300"
                   initial={{ pathLength: 0, opacity: 0 }}
@@ -123,12 +118,12 @@ export const ProgressionTree = ({ progression, selectedKey, activeIndex, playing
           {trunkNodes.map((n, i) => {
             const isActive = activeIndex === i || playingSingle === i;
             
-            let baseClasses = "absolute -translate-x-1/2 -translate-y-1/2 rounded-full flex flex-col items-center justify-center border-2 shadow-lg transition-all duration-300 ";
+            let baseClasses = "absolute -translate-x-1/2 -translate-y-1/2 rounded-full flex flex-col items-center justify-center border transition-all duration-300 ";
             
             if (isActive) {
-              baseClasses += "bg-slate-900 border-amber-400 w-24 h-24 z-40 ring-4 ring-amber-400/30 shadow-[0_0_25px_rgba(251,191,36,0.5)] scale-110";
+              baseClasses += "bg-emerald-900 border-emerald-400 w-10 h-10 z-40 ring-2 ring-emerald-400/30 scale-110";
             } else {
-              baseClasses += "bg-slate-800/90 border-slate-700 w-16 h-16 z-20 opacity-80";
+              baseClasses += "bg-slate-800 border-slate-700 w-6 h-6 z-20 opacity-70";
             }
 
             return (
@@ -140,22 +135,9 @@ export const ProgressionTree = ({ progression, selectedKey, activeIndex, playing
                 className={baseClasses}
                 style={{ left: n.x, top: -n.y }}
               >
-                <span className={`${isActive ? 'text-2xl' : 'text-lg'} font-black text-slate-100 leading-none mb-1`}>
+                <span className={`${isActive ? 'text-xs' : 'text-[10px]'} font-black text-slate-100 leading-none`}>
                   {n.numeral}
                 </span>
-                <span className={`text-[10px] font-bold ${isActive ? 'text-amber-500' : 'text-slate-500'}`}>
-                  {getChordName(selectedKey, n.numeral)}
-                </span>
-                
-                {isActive && (
-                  <div className={`absolute -bottom-3 px-2 py-0.5 rounded-full text-[9px] font-bold shadow-md border border-slate-700 bg-slate-900 text-slate-300 whitespace-nowrap`}>
-                    {n.role.split(' ')[0]}
-                  </div>
-                )}
-                
-                {isActive && (
-                  <Volume2 className="absolute -right-1 -bottom-1 w-5 h-5 text-amber-400 animate-pulse bg-slate-900 rounded-full p-1 shadow-md border border-slate-700" />
-                )}
               </motion.div>
             );
           })}

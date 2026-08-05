@@ -13,6 +13,7 @@ export const ChordCompass = ({ selectedKey, onKeyChange }) => {
   const [activeIndex, setActiveIndex] = useState(-1);
   const [playingSingle, setPlayingSingle] = useState(-1);
   const [isFullView, setIsFullView] = useState(false);
+  const [manualZoom, setManualZoom] = useState(1);
 
   const handlePreview = async (numeral) => {
     setHoveredChord(numeral);
@@ -60,6 +61,7 @@ export const ChordCompass = ({ selectedKey, onKeyChange }) => {
     setIsPlayingAll(false);
     setActiveIndex(-1);
     setIsFullView(false); // Reset view as well
+    setManualZoom(1);
   };
 
   const handleUndo = () => {
@@ -94,9 +96,9 @@ export const ChordCompass = ({ selectedKey, onKeyChange }) => {
         tempToggleRef.current *= -1; 
       }
       const angleRad = finalAngle * (Math.PI / 180);
-      const radius = 260 + (Math.abs(finalAngle) * 0.4); 
+      const radius = 150 + (Math.abs(finalAngle) * 0.2); // Reduced from 260 for compact view
       const relX = Math.sin(angleRad) * radius;
-      const relY = Math.cos(angleRad) * radius; // Allowed to go negative for downward growth!
+      const relY = Math.cos(angleRad) * radius;
       return { finalAngle, relX, relY };
     };
 
@@ -186,15 +188,18 @@ export const ChordCompass = ({ selectedKey, onKeyChange }) => {
   }, [isFullView, boundingBox, finalNode, history.length]);
 
   return (
-    <div className="w-full max-w-5xl mx-auto flex flex-col gap-4 mb-4">
-      <div className="relative w-full h-[600px] bg-slate-900/60 backdrop-blur-2xl rounded-2xl border border-white/10 overflow-hidden shadow-2xl flex justify-center items-center">
+    <div className="w-full max-w-6xl mx-auto flex flex-col gap-4 my-4">
+      <div 
+        className="relative w-full h-[45vh] min-h-[350px] max-h-[450px] bg-slate-900/60 backdrop-blur-2xl rounded-3xl border border-white/10 overflow-hidden shadow-2xl flex justify-center items-center"
+        onWheel={(e) => setManualZoom(z => Math.max(0.3, Math.min(4, z - e.deltaY * 0.002)))}
+      >
         
         <div className="absolute top-4 left-4 z-50">
           <KeySelector selectedKey={selectedKey} onKeyChange={onKeyChange} />
         </div>
 
         <button 
-          onClick={() => setIsFullView(!isFullView)}
+          onClick={() => { setIsFullView(!isFullView); setManualZoom(1); }}
           className="absolute bottom-4 right-4 z-50 flex items-center gap-2 px-3 py-2 bg-slate-800/90 backdrop-blur-md shadow-lg rounded-xl border border-white/10 text-slate-300 hover:text-emerald-400 hover:border-emerald-500/50 font-bold text-xs transition-all"
         >
           {isFullView ? <ZoomIn className="w-4 h-4" /> : <ZoomOut className="w-4 h-4" />}
@@ -202,11 +207,15 @@ export const ChordCompass = ({ selectedKey, onKeyChange }) => {
         </button>
 
         <motion.div 
-          animate={{ x: cameraProps.x, y: cameraProps.y, scale: cameraProps.scale }}
+          drag
+          dragConstraints={{ left: -1500, right: 1500, top: -1500, bottom: 1500 }}
+          dragElastic={0.1}
+          animate={{ x: cameraProps.x, y: cameraProps.y, scale: cameraProps.scale * manualZoom }}
           transition={{ type: "spring", damping: 25, stiffness: 120 }}
-          className="relative z-10 w-0 h-0"
+          className="absolute inset-[-2000px] cursor-grab active:cursor-grabbing flex items-center justify-center z-10"
         >
-          <svg className="absolute overflow-visible pointer-events-none" style={{ left: 0, top: 0, width: 1, height: 1 }}>
+          <div className="relative w-0 h-0">
+            <svg className="absolute overflow-visible pointer-events-none" style={{ left: 0, top: 0, width: 1, height: 1 }}>
             
             <AnimatePresence>
               {trunkNodes.map((n, i) => {
@@ -306,10 +315,12 @@ export const ChordCompass = ({ selectedKey, onKeyChange }) => {
                   onMouseEnter={() => handlePreview(n.numeral)}
                   onMouseLeave={() => setHoveredChord(null)}
                 >
-                  <span className={`${isFinal ? 'text-4xl' : 'text-xl'} font-black text-slate-100 leading-none mb-1`}>
+                  <span className={`${isFinal ? 'text-4xl' : 'text-xl'} font-black leading-none mb-1 
+                    ${isFinal ? 'text-amber-400' : isActive ? 'text-slate-100' : 'text-slate-500'}`}>
                     {n.numeral}
                   </span>
-                  <span className={`${isFinal ? 'text-base' : 'text-[10px]'} font-bold ${isFinal ? 'text-slate-400' : 'text-slate-500'}`}>
+                  <span className={`${isFinal ? 'text-base' : 'text-[10px]'} font-bold 
+                    ${isFinal ? 'text-amber-500/80' : isActive ? 'text-slate-300' : 'text-slate-600'}`}>
                     {getChordName(selectedKey, n.numeral)}
                   </span>
                   
@@ -337,28 +348,30 @@ export const ChordCompass = ({ selectedKey, onKeyChange }) => {
                   animate={{ scale: 1, opacity: 1 }}
                   exit={{ scale: 0, opacity: 0 }}
                   transition={{ duration: 0.4, delay: 0.3 + (idx * 0.05), type: "spring" }}
-                  whileHover={{ scale: 1.1 }}
+                  whileHover={{ scale: 1.1, zIndex: 50 }}
                   whileTap={{ scale: 0.95 }}
                   onMouseEnter={() => handlePreview(b.next)}
                   onMouseLeave={() => setHoveredChord(null)}
                   onClick={() => handleSelectNext(b.next)}
-                  className={`absolute -translate-x-1/2 -translate-y-1/2 rounded-2xl flex flex-col items-center justify-center p-3 shadow-lg transition-all z-20 hover:z-50 cursor-pointer
+                  className={`absolute -translate-x-1/2 -translate-y-1/2 rounded-2xl flex flex-col items-center justify-center p-3 shadow-lg transition-all cursor-pointer
                     ${isHighest 
-                      ? 'bg-slate-900 border-2 border-sky-400/50 w-24 h-24 shadow-[0_0_15px_rgba(56,189,248,0.2)] hover:bg-slate-800 hover:border-sky-400 hover:shadow-[0_0_30px_rgba(56,189,248,0.6)]' 
-                      : 'bg-slate-900/90 backdrop-blur-md border border-sky-500/40 w-20 h-20 shadow-[0_0_10px_rgba(14,165,233,0.15)] hover:bg-slate-800 hover:border-sky-400 hover:shadow-[0_0_25px_rgba(56,189,248,0.5)]'
+                      ? 'bg-slate-100 border-2 border-sky-400 w-24 h-24 shadow-[0_0_20px_rgba(56,189,248,0.5)] hover:bg-white hover:border-sky-300 hover:shadow-[0_0_30px_rgba(56,189,248,0.8)]' 
+                      : 'bg-slate-200 border-2 border-sky-400/40 w-20 h-20 shadow-[0_0_10px_rgba(14,165,233,0.2)] hover:bg-slate-100 hover:border-sky-400 hover:shadow-[0_0_20px_rgba(56,189,248,0.6)]'
                     }
                   `}
-                  style={{ left: b.x, top: -b.y }}
+                  style={{ left: b.x, top: -b.y, zIndex: 40 - idx }}
                 >
-                  <span className={`text-2xl font-black leading-none mb-1 ${isHighest ? 'text-slate-200' : 'text-slate-400'}`}>
+                  <span className={`text-2xl font-black leading-none mb-1 
+                    ${isHighest ? 'text-slate-900' : 'text-slate-500'}`}>
                     {b.next}
                   </span>
-                  <span className="text-[11px] font-bold text-slate-500">
+                  <span className={`text-[11px] font-bold 
+                    ${isHighest ? 'text-slate-700' : 'text-slate-400'}`}>
                     {getChordName(selectedKey, b.next)}
                   </span>
                   
                   <div className={`absolute -top-3 px-2 py-0.5 rounded-full text-[10px] font-bold whitespace-nowrap shadow-md border
-                    ${isHighest ? 'bg-slate-900 text-slate-300 border-slate-600' : 'bg-slate-900 text-slate-400 border-slate-700'}
+                    ${isHighest ? 'bg-sky-500 text-white border-sky-400 shadow-sky-500/50' : 'bg-slate-300 text-slate-600 border-slate-400'}
                   `}>
                     {b.probability}%
                   </div>
@@ -370,60 +383,63 @@ export const ChordCompass = ({ selectedKey, onKeyChange }) => {
               );
             })}
           </AnimatePresence>
+          </div>
         </motion.div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="md:col-span-1 bg-slate-900/60 backdrop-blur-md rounded-2xl p-4 border border-white/10 flex flex-col gap-2 shadow-lg">
-          <div className="flex items-center gap-2">
-            <Info className="w-5 h-5 text-emerald-500 shrink-0" />
-            <h4 className="font-bold text-emerald-500 text-sm">화성학 가이드</h4>
+      <div className="flex flex-col md:flex-row gap-4 h-[120px]">
+        {/* Guide */}
+        <div className="md:w-[260px] shrink-0 bg-slate-900/60 backdrop-blur-md rounded-2xl p-3 border border-white/10 flex flex-col gap-1.5 shadow-lg overflow-y-auto">
+          <div className="flex items-center gap-1.5 mb-1">
+            <Info className="w-4 h-4 text-emerald-500 shrink-0" />
+            <h4 className="font-bold text-emerald-500 text-[11px]">화성학 가이드</h4>
           </div>
-          <p className="text-slate-300 font-medium text-sm leading-relaxed">
+          <p className="text-slate-300 font-medium text-[11px] leading-relaxed">
             {chordInfo.tip}
           </p>
         </div>
 
-        <div className="md:col-span-2 bg-slate-900/60 backdrop-blur-md rounded-2xl p-5 border border-white/10 shadow-lg">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
-            <h3 className="text-slate-200 font-bold text-sm flex items-center gap-2">
-              <Network className="w-4 h-4 text-emerald-500" />
-              🎵 진행 히스토리
+        {/* History */}
+        <div className="flex-1 min-w-0 bg-slate-900/60 backdrop-blur-md rounded-2xl p-3 border border-white/10 shadow-lg flex flex-col">
+          <div className="flex items-center justify-between gap-3 mb-2 px-1">
+            <h3 className="text-slate-200 font-bold text-xs flex items-center gap-1.5 shrink-0">
+              <Network className="w-3.5 h-3.5 text-emerald-500" />
+              진행 히스토리
             </h3>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1.5 shrink-0">
               <button
                 onClick={handleReset}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold text-slate-300 bg-slate-800 hover:bg-slate-700 border border-slate-700 transition-colors"
+                className="flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold text-slate-300 bg-slate-800 hover:bg-slate-700 border border-slate-700 transition-colors"
               >
-                <RotateCcw className="w-3.5 h-3.5" />
+                <RotateCcw className="w-3 h-3" />
                 초기화
               </button>
               <button
                 onClick={handleUndo}
                 disabled={history.length <= 1}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold transition-colors border
+                className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold transition-colors border
                   ${history.length <= 1 ? 'text-slate-600 bg-slate-800/50 border-slate-800/50 cursor-not-allowed' : 'text-slate-300 bg-slate-800 border-slate-700 hover:bg-slate-700'}
                 `}
               >
-                <Eraser className="w-3.5 h-3.5" />
+                <Eraser className="w-3 h-3" />
                 지우기
               </button>
               <button
                 onClick={handlePlayAll}
                 disabled={history.length === 0}
-                className={`flex items-center gap-1.5 px-4 py-1.5 rounded-full text-xs font-bold text-white transition-all
+                className={`flex items-center gap-1 px-3 py-1 rounded-full text-[10px] font-bold text-white transition-all
                   ${history.length === 0 ? 'bg-slate-700 cursor-not-allowed' :
                     isPlayingAll 
-                    ? 'bg-red-500 hover:bg-red-600 shadow-md shadow-red-500/30' 
-                    : 'bg-emerald-500 hover:bg-emerald-600 shadow-md shadow-emerald-500/30'}`}
+                    ? 'bg-red-500 hover:bg-red-600 shadow-[0_0_10px_rgba(239,68,68,0.4)]' 
+                    : 'bg-emerald-500 hover:bg-emerald-600 shadow-[0_0_10px_rgba(16,185,129,0.3)]'}`}
               >
-                {isPlayingAll ? <Square className="w-3.5 h-3.5" /> : <Play className="w-3.5 h-3.5 fill-current" />}
-                {isPlayingAll ? '정지' : '전체 들어보기'}
+                {isPlayingAll ? <Square className="w-3 h-3" /> : <Play className="w-3 h-3 fill-current" />}
+                {isPlayingAll ? '정지' : '전체 재생'}
               </button>
             </div>
           </div>
 
-          <div className="flex flex-wrap items-center gap-2 p-3 bg-slate-800/50 rounded-xl max-h-[140px] overflow-y-auto border border-white/5">
+          <div className="flex-1 flex flex-nowrap items-center gap-1.5 p-1.5 bg-slate-800/50 rounded-xl overflow-x-auto overflow-y-hidden border border-white/5 scrollbar-thin">
             <AnimatePresence>
               {history.map((numeral, idx) => {
                 const isActive = activeIndex === idx || playingSingle === idx;
@@ -434,18 +450,18 @@ export const ChordCompass = ({ selectedKey, onKeyChange }) => {
                       animate={{ opacity: 1, scale: 1 }}
                       exit={{ opacity: 0, scale: 0.5, transition: { duration: 0.2 } }}
                       onClick={() => handlePlayHistoryChord(numeral, idx)}
-                      className={`flex flex-col items-center border px-3 py-2 rounded-lg shadow-sm min-w-[60px] cursor-pointer transition-all
+                      className={`shrink-0 flex flex-col items-center border px-2 py-1.5 rounded-lg shadow-sm min-w-[50px] cursor-pointer transition-all
                         ${isActive 
-                          ? 'bg-slate-800 border-amber-400 ring-2 ring-amber-400/30 shadow-[0_0_15px_rgba(251,191,36,0.3)]' 
-                          : 'bg-slate-800/50 border-slate-700 hover:border-sky-400 hover:shadow-[0_0_15px_rgba(56,189,248,0.3)]'
+                          ? 'bg-slate-800 border-amber-400 ring-1 ring-amber-400/30 shadow-[0_0_10px_rgba(251,191,36,0.3)]' 
+                          : 'bg-slate-800/50 border-slate-700 hover:border-sky-400 hover:shadow-[0_0_10px_rgba(56,189,248,0.3)]'
                         }
                         ${isPlayingAll ? 'pointer-events-none' : ''}
                       `}
                     >
-                      <span className={`text-lg font-black ${isActive ? 'text-amber-400' : 'text-slate-300'}`}>
+                      <span className={`text-base font-black leading-none mb-0.5 ${isActive ? 'text-amber-400' : 'text-slate-300'}`}>
                         {numeral}
                       </span>
-                      <span className={`text-[10px] font-bold mt-0.5 ${isActive ? 'text-amber-500' : 'text-slate-500'}`}>
+                      <span className={`text-[9px] font-bold ${isActive ? 'text-amber-500' : 'text-slate-500'}`}>
                         {getChordName(selectedKey, numeral)}
                       </span>
                     </motion.button>
@@ -454,7 +470,7 @@ export const ChordCompass = ({ selectedKey, onKeyChange }) => {
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0, transition: { duration: 0.1 } }}
-                        className="text-slate-600 font-black text-sm"
+                        className="shrink-0 text-slate-600 font-black text-[10px]"
                       >
                         ➔
                       </motion.div>

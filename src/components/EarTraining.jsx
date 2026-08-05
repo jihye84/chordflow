@@ -161,16 +161,16 @@ export const EarTraining = ({ selectedKey, onKeyChange }) => {
           </div>
         </div>
 
-        <div className="relative w-24 h-24 mb-4 flex justify-center items-center">
+        <div className="relative w-16 h-16 mb-2 flex justify-center items-center">
           <motion.button
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             onClick={() => playProblem()}
-            className={`absolute z-10 w-20 h-20 rounded-full flex justify-center items-center border-4 transition-colors
+            className={`absolute z-10 w-14 h-14 rounded-full flex justify-center items-center border-4 transition-colors
               ${isPlaying ? 'bg-amber-500 border-amber-300 shadow-[0_0_30px_rgba(245,158,11,0.6)]' : 'bg-slate-800 border-slate-600 hover:border-amber-400 hover:shadow-[0_0_15px_rgba(251,191,36,0.4)]'}
             `}
           >
-            {isPlaying ? <Volume2 className="w-8 h-8 text-white animate-pulse" /> : <Play className="w-8 h-8 text-white fill-current ml-1" />}
+            {isPlaying ? <Volume2 className="w-6 h-6 text-white animate-pulse" /> : <Play className="w-6 h-6 text-white fill-current ml-1" />}
           </motion.button>
           
           {isPlaying && (
@@ -178,7 +178,7 @@ export const EarTraining = ({ selectedKey, onKeyChange }) => {
               initial={{ scale: 0.8, opacity: 0.8 }}
               animate={{ scale: 1.5, opacity: 0 }}
               transition={{ duration: 1, repeat: Infinity }}
-              className="absolute w-20 h-20 rounded-full bg-amber-500/50 z-0"
+              className="absolute w-14 h-14 rounded-full bg-amber-500/50 z-0"
             />
           )}
         </div>
@@ -267,17 +267,17 @@ export const EarTraining = ({ selectedKey, onKeyChange }) => {
                       key={q.id}
                       onClick={() => handleChoiceClick(q.id)}
                       onContextMenu={(e) => e.preventDefault()}
-                      className={`relative flex flex-col items-center justify-center pt-3 pb-3 px-2 border rounded-xl transition-all shadow-md overflow-hidden group
+                      className={`relative flex flex-col items-center justify-center pt-2 pb-2 px-1 border rounded-xl transition-all shadow-md overflow-hidden group
                         ${isSelected 
                           ? 'bg-sky-900/60 border-sky-400 shadow-[0_0_15px_rgba(56,189,248,0.5)]' 
                           : 'bg-slate-800/80 hover:bg-slate-700 border-slate-600 hover:border-sky-400 hover:shadow-[0_0_15px_rgba(56,189,248,0.3)]'}
                       `}
                     >
-                      <span className={`font-black text-sm transition-colors ${isSelected ? 'text-white' : 'text-slate-300'} ${isSelected ? 'mb-2' : ''}`}>
+                      <span className={`font-black text-xs transition-colors ${isSelected ? 'text-white' : 'text-slate-300'} ${isSelected ? 'mb-1.5' : ''}`}>
                         {q.label}
                       </span>
                       {isSelected && (
-                        <div className="absolute bottom-0 w-full bg-emerald-500 text-slate-900 text-[10px] font-black py-0.5 animate-pulse">
+                        <div className="absolute bottom-0 w-full bg-emerald-500 text-slate-900 text-[9px] font-black py-0 animate-pulse">
                           클릭하여 제출
                         </div>
                       )}
@@ -292,13 +292,13 @@ export const EarTraining = ({ selectedKey, onKeyChange }) => {
                     initial={{ opacity: 0, height: 0, overflow: 'hidden' }}
                     animate={{ opacity: 1, height: 'auto', overflow: 'visible' }}
                     exit={{ opacity: 0, height: 0, overflow: 'hidden' }}
-                    className="w-full flex flex-col items-center gap-3 mt-4 pt-4 border-t border-slate-700/50"
+                    className="w-full flex flex-col items-center gap-1.5 mt-2 pt-2 border-t border-slate-700/50"
                   >
-                    <div className="text-sky-400 font-bold text-sm bg-sky-500/10 px-3 py-1 rounded-full border border-sky-500/20">
+                    <div className="text-sky-400 font-bold text-xs bg-sky-500/10 px-2 py-0.5 rounded-full border border-sky-500/20">
                       미리보기: {getChordName(currentProblemKey, previewQuality)}
                     </div>
-                    <div className="flex flex-col md:flex-row items-center gap-6 w-full max-w-2xl justify-center bg-slate-800/50 p-4 rounded-2xl shadow-inner">
-                      <div className="scale-75 origin-center -m-4">
+                    <div className="flex flex-col md:flex-row items-center gap-2 w-full max-w-2xl justify-center bg-slate-800/50 p-2 rounded-2xl shadow-inner">
+                      <div className="scale-[0.65] origin-center -my-6 -mx-8">
                         <PianoKeyboard 
                           activeNotes={getChordNotes(currentProblemKey, previewQuality)} 
                           onKeyClick={(note) => {
@@ -307,7 +307,7 @@ export const EarTraining = ({ selectedKey, onKeyChange }) => {
                           }}
                         />
                       </div>
-                      <div className="bg-white/90 p-2 rounded-xl shadow-md shrink-0">
+                      <div className="bg-white/90 p-1.5 rounded-xl shadow-md shrink-0 scale-90">
                         <StaffNotation notes={getChordNotes(currentProblemKey, previewQuality)} />
                       </div>
                     </div>
