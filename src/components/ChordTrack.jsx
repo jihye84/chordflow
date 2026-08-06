@@ -190,9 +190,10 @@ export const ChordTrack = ({ progression, selectedKey, onKeyChange }) => {
                 <AnimatePresence>
                   {(activeIndex === idx || playingSingle === idx) && (
                     <motion.div
+                      key="pulse"
                       initial={{ scale: 0.9, opacity: 0.8 }}
                       animate={{ scale: 1.15, opacity: 0 }}
-                      exit={{ opacity: 0 }}
+                      exit={{ opacity: 0, transition: { duration: 0.1 } }}
                       transition={{ 
                         duration: (60 / bpm) * 4, // Sync pulse duration with chord duration
                         repeat: activeIndex === idx ? Infinity : 0, 

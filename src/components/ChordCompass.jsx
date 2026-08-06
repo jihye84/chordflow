@@ -47,7 +47,7 @@ export const ChordCompass = ({ selectedKey, onKeyChange }) => {
 
     const totalDuration = await playProgression(chordsToPlay, (idx) => {
       setActiveIndex(idx);
-    }, 1.5);
+    }, 160);
     
     setTimeout(() => {
       setIsPlayingAll(false);

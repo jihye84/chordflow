@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useRef, useEffect } from 'react';
 
 const KEYS = [
   { note: 'C', type: 'white', isFlat: false },
@@ -35,13 +35,46 @@ const normalizeNote = (n) => {
 };
 
 export const PianoKeyboard = ({ activeNotes = [], onKeyClick }) => {
+  const containerRef = useRef(null);
   const activeSet = new Set(activeNotes.flatMap(normalizeNote));
   const whiteKeys = PIANO_RANGE.filter(k => k.type === 'white');
   const whiteKeyWidth = 32; 
+
+  useEffect(() => {
+    if (activeNotes.length > 0 && containerRef.current) {
+      const container = containerRef.current;
+      
+      let minLeft = Infinity;
+      let maxRight = -Infinity;
+      
+      PIANO_RANGE.forEach((key, index) => {
+        if (activeSet.has(key.name)) {
+          const whiteIndex = PIANO_RANGE.slice(0, index).filter(k => k.type === 'white').length;
+          const leftPos = whiteIndex * whiteKeyWidth;
+          if (leftPos < minLeft) minLeft = leftPos;
+          if (leftPos + whiteKeyWidth > maxRight) maxRight = leftPos + whiteKeyWidth;
+        }
+      });
+      
+      if (minLeft !== Infinity) {
+        const activeCenter = (minLeft + maxRight) / 2;
+        const containerWidth = container.clientWidth;
+        const scrollTarget = activeCenter - containerWidth / 2;
+        
+        container.scrollTo({
+          left: scrollTarget,
+          behavior: 'smooth'
+        });
+      }
+    }
+  }, [activeNotes.join(','), whiteKeyWidth]);
   
   return (
-    <div className="relative flex justify-center w-full overflow-x-auto py-2 scrollbar-hide">
-      <div className="relative flex h-24 border border-slate-700 bg-slate-900 rounded-b-xl overflow-hidden shadow-2xl" style={{ minWidth: `${whiteKeys.length * whiteKeyWidth}px` }}>
+    <div 
+      ref={containerRef}
+      className="relative w-full overflow-x-auto py-2 scrollbar-hide scroll-smooth"
+    >
+      <div className="relative flex h-24 border border-slate-700 bg-slate-900 rounded-b-xl overflow-hidden shadow-2xl w-max mx-auto" style={{ minWidth: `${whiteKeys.length * whiteKeyWidth}px` }}>
         
         {whiteKeys.map((wk, i) => {
           const isActive = activeSet.has(wk.name);
