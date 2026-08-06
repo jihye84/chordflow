@@ -16,9 +16,9 @@ const KEYS = [
 ];
 
 const PIANO_RANGE = [
+  ...KEYS.map(k => ({ ...k, name: `${k.note}2` })),
   ...KEYS.map(k => ({ ...k, name: `${k.note}3` })),
-  ...KEYS.map(k => ({ ...k, name: `${k.note}4` })),
-  ...KEYS.map(k => ({ ...k, name: `${k.note}5` })) 
+  ...KEYS.map(k => ({ ...k, name: `${k.note}4` })) 
 ];
 
 const equivalentNotes = {
